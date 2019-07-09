@@ -1,6 +1,6 @@
-import readline, inspect
+import sys, readline, inspect, subprocess
 from pathlib import Path
-
+from io import StringIO
 
 # self defined modules
 from orecompleter import OreCompleter
@@ -117,11 +117,27 @@ class Ore(object):
     ######################
 
     def __evaluate(self, line):
-        parts = line.split(' ', 1)
+        '''Evaluate line command.
+        
+           - check if bash command entered and split line into subclass
+             command and bash command.
+           - split subclass command string into command and arguments
+             and execute command
+           - if bash string present, pass output from subclass command to
+             input of bash string and execute
+        '''
+
+        ## check for presence of bash command
+        line = self.__split_bash(line)
+        command_string = line[0]
+        bash_string = line[1] if len(line) > 1 else ""
+        
+        ## get command and arguments
+        parts = command_string.split(' ', 1)
         command = parts[0]
         args = parts[1].split(self.split_pattern) if (len(parts) > 1) else []
                 
-        # check for predefined commands
+        ## check for predefined commands
         if (command == "quit"):
             self.ore_quit(args)
             return False
@@ -130,9 +146,13 @@ class Ore(object):
         
         else:
 
-            # check for subclass commands
+            ## check for subclass commands
             if (command in self.commands):
-                self.commands[command](args)
+                ## send command output to bash command if bash command given
+                if (bash_string):
+                    self.__bash(command, args, bash_string) 
+                else:
+                    self.commands[command](args)
             else:
                 self.default(line)
                 return True
@@ -142,4 +162,34 @@ class Ore(object):
 
         return True
 
+
+    def __split_bash(self, line):
+        '''Split line into subclass command string and bash string if
+        exists.
+        '''
+        parts = line.split("|", 1)
+        return parts
+
+
+    def __bash(self, command, args, bash_string):
+        '''Execute bash command from output of given subclass command.
+        '''
+        out_string = self.__get_stdout(command, args)
+        bash_args = ["echo", "'{}'".format(out_string), "|"]
+        for s in bash_string.split():
+            bash_args.append(s.strip())
+        stdout = subprocess.run(' '.join(bash_args), shell=True)
+
+
+    def __get_stdout(self, command, args):
+        '''Run command and return output printed to console.
+        '''
+        bu = sys.stdout
+        sys.stdout = StringIO()
+        self.commands[command](args)
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = bu
+
+        return out
 
