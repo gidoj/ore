@@ -61,10 +61,8 @@ class Ore(object):
         
            - Ore default behavior repeats last entered command.
         '''
-        # TODO: implement
+        self.__evaluate(readline.get_history_item(readline.get_current_history_length()))
         
-        # do nothing for now
-        return
         
     def show_docs(self):
         '''Compile and present documentation based on user defined
