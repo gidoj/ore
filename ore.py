@@ -42,28 +42,8 @@ class Ore(object):
         while (True):
             line = input(self.prompt)
             if (line):
-                parts = line.split(' ', 1)
-                command = parts[0]
-                args = parts[1].split(self.split_pattern) if (len(parts) > 1) else []
-                
-                # check for predefined commands
-                if (command == "quit"):
-                    self.ore_quit(args)
-                    break;
-                elif (command == "?"):
-                    self.show_docs()
-
-                # check for subclass commands
-                if (command in self.commands):
-                    self.commands[command](args)
-                else:
-                    self.default(line)
-                    continue
-                
-
-
-                readline.append_history_file(1, "./.history")
-
+                loop = self.__evaluate(line)
+                if (not loop): break
             else:
                 self.emptyline()
 
@@ -104,3 +84,35 @@ class Ore(object):
         '''Quit the program.'''
         print("Bye.")
         return True
+
+    ######################
+    ## HELPER FUNCTIONS ##
+    ######################
+
+    def __evaluate(self, line):
+        parts = line.split(' ', 1)
+        command = parts[0]
+        args = parts[1].split(self.split_pattern) if (len(parts) > 1) else []
+                
+        # check for predefined commands
+        if (command == "quit"):
+            self.ore_quit(args)
+            return False
+        elif (command == "?"):
+            self.show_docs()
+        
+        else:
+
+            # check for subclass commands
+            if (command in self.commands):
+                self.commands[command](args)
+            else:
+                self.default(line)
+                return True
+                
+        
+        readline.append_history_file(1, "./.history")
+
+        return True
+
+
