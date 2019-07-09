@@ -36,6 +36,8 @@ class Ore(object):
 
 
     def main_loop(self):
+        
+        print(self.intro)
 
         while (True):
             line = input(self.prompt)
@@ -78,8 +80,9 @@ class Ore(object):
            methods and docstrings.
         '''
         # TODO: implement
+        class_doc = self.__doc__ if self.__doc__ else ""
         print("\n{} Documentation".format(self.__class__.__name__))
-        print("{}\n".format('-'*25))
+        print("{0}\n{1}\n{0}".format('-'*25, class_doc))
         for key in self.commands.keys():
             docs = self.commands[key].__doc__ if self.commands[key].__doc__ else ""
             print(key)
