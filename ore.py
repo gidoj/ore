@@ -1,6 +1,7 @@
 import readline, inspect
 from pathlib import Path
 
+
 # self defined modules
 from orecompleter import OreCompleter
 
@@ -11,14 +12,15 @@ class Ore(object):
 
     def __init__(self):
         
-        #create .history if doesn't exist
+        ## create .history if doesn't exist
         if (not Path("./.history").is_file()): open("./.history", 'w').close()
 
-        # read in saved history commands
+        ## read in saved history commands
         readline.read_history_file("./.history")
 
-        # get defined commands
+        ## get defined commands
         self.commands = {}
+        completers = {}
         members = inspect.getmembers(self, predicate=inspect.ismethod)
         for m in members:
             name = m[0]
@@ -26,12 +28,25 @@ class Ore(object):
             # defined commands are of pattern "ore_<command>"
             if (name.startswith("ore_")):
                 self.commands[name[4:]] = f
+            
+            # completer methods are of pattern "completer_<command>"
+            elif (name.startswith("completer_")):
+                completers[name[10:]] = f
 
-        # setup completer
+        ## setup completer
         completer = OreCompleter(list(self.commands.keys()))
+        
+        # check if any subclass completers have been set
+        for c in completers.keys():
+            # raise exception if c not a defined command (ore_<command>)
+            if (c not in self.commands):
+                raise Exception("cannot set completer of undefined command ({})".format(c))
+
+            completer.set_command_completer(c, completers[c])
+
         readline.set_completer(completer.complete)
 
-        # bind tab to autocomplete
+        ## bind tab to autocomplete
         readline.parse_and_bind("tab: complete")
 
 
