@@ -15,7 +15,8 @@ class OreCompleter(object):
             if (text):
                 self.matches = [m for m in self.options if m.startswith(text)]
             else:
-                self.matches = []
+                # if no text, then return everything
+                self.matches = self.options
 
         try:
             return self.matches[state]
