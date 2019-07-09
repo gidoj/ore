@@ -52,6 +52,8 @@ class Ore(object):
 
     def main_loop(self):
         
+        self.preloop()
+
         print(self.intro)
 
         while (True):
@@ -61,6 +63,8 @@ class Ore(object):
                 if (not loop): break
             else:
                 self.emptyline()
+
+        self.postloop()
 
 
     def default(self, line):
@@ -97,6 +101,16 @@ class Ore(object):
         '''Quit the program.'''
         print("Bye.")
         return True
+    
+    def preloop(self):
+        '''Function executed just before main_loop() started. To be overridden by subclass.
+        '''
+        return
+
+    def postloop(self):
+        '''Function executed jsut before main_loop() exits. To be overridden by subclass.
+        '''
+        return
 
     ######################
     ## HELPER FUNCTIONS ##
