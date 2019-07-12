@@ -9,6 +9,11 @@ class Ore(object):
     intro = "Welcome. Type ? for documentation."
     prompt = '>> '
     split_pattern = ' '
+    
+    # TODO: fill in
+    flags = {}
+    groups = {"Commands": []}
+
 
     def __init__(self):
         
@@ -108,13 +113,27 @@ class Ore(object):
         return
 
     def postloop(self):
-        '''Function executed jsut before main_loop() exits. To be overridden by subclass.
+        '''Function executed just before main_loop() exits. To be overridden by subclass.
         '''
         return
 
     ######################
     ## HELPER FUNCTIONS ##
     ######################
+
+    def __compile_docs(self):
+        # TODO: implement
+        class_name = self.__class__.__name__
+        class_docstring = self.__parse_docstring(self.__doc__)
+
+
+
+    def __parse_docstring(self, docstring):
+        # TODO: implement
+        usage = ""
+        description = ""
+        example = ""
+        return {"usage": usage, "description": description, "example": example}
 
     def __evaluate(self, line):
         '''Evaluate line command.
