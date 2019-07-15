@@ -4,6 +4,7 @@ from io import StringIO
 
 # self defined modules
 from orecompleter import OreCompleter
+from flag import Flag
 
 class Ore(object):
     intro = "Welcome. Type ? for documentation."
@@ -64,8 +65,8 @@ class Ore(object):
         while (True):
             line = input(self.prompt)
             if (line):
-                loop = self.__evaluate(line)
-                if (not loop): break
+                if (not self.__evaluate(line)): break 
+                readline.append_history_file(1, "./.history")
             else:
                 self.emptyline()
 
@@ -144,6 +145,8 @@ class Ore(object):
              and execute command
            - if bash string present, pass output from subclass command to
              input of bash string and execute
+           - check if flags defined on input and if any passed to line input
+           - if flags present, parse out
         '''
 
         ## check for presence of bash command
@@ -154,7 +157,21 @@ class Ore(object):
         ## get command and arguments
         parts = command_string.split(' ', 1)
         command = parts[0]
-        args = parts[1].split(self.split_pattern) if (len(parts) > 1) else []
+        
+        # check if any flags defined
+        def_flags = self.__get_flags(command)
+
+        # check if flags passed in through input
+        args = []
+        matched_flags = {}
+        if (len(parts) > 1):
+            if (def_flags):
+                flag_search = Flag.parse_out_flags(parts[1], def_flags)
+                matched_flags = flag_search["matches"]
+                parsed = flag_search["line"]
+            else:
+                parsed = parts[1]
+            args = parsed.split(self.split_pattern)
                 
         ## check for predefined commands
         if (command == "quit"):
@@ -169,15 +186,11 @@ class Ore(object):
             if (command in self.commands):
                 ## send command output to bash command if bash command given
                 if (bash_string):
-                    self.__bash(command, args, bash_string) 
+                    self.__bash(command, args, matched_flags, bash_string) 
                 else:
-                    self.commands[command](args)
+                    self.__exec_command(command, args, matched_flags)
             else:
                 self.default(line)
-                return True
-                
-        
-        readline.append_history_file(1, "./.history")
 
         return True
 
@@ -190,10 +203,10 @@ class Ore(object):
         return parts
 
 
-    def __bash(self, command, args, bash_string):
+    def __bash(self, command, args, flags, bash_string):
         '''Execute bash command from output of given subclass command.
         '''
-        out_string = self.__get_stdout(command, args)
+        out_string = self.__get_stdout(command, args, flags)
         bash_args = ["echo", "'{}'".format(out_string), "|"]
         for s in bash_string.split():
             bash_args.append(s.strip())
@@ -205,10 +218,58 @@ class Ore(object):
         '''
         bu = sys.stdout
         sys.stdout = StringIO()
-        self.commands[command](args)
+        self.__exec_command(self, command, args, flags)
         out = sys.stdout.getvalue()
         sys.stdout.close()
         sys.stdout = bu
 
         return out
 
+    def __get_flags(self, command):
+        '''Given a command, return its defined flags.
+
+           - if no flags defined, return empty typle ()
+        '''
+        try:
+            flags = getattr(self, 'flags_'+command)
+        except AttributeError:
+            flags = ()
+        
+        return flags
+
+
+    def __exec_command(self, command, args, flags):
+        '''Given a command, execute desired ore_* method.
+
+           - find and execute and flag functions if defined
+           - check if ore_* method takes in args, flags
+           - pass args, flags if method takes parameters
+        '''
+        ## search for, execute flag functions
+        def_flags = self.__get_flags(command)
+        if (def_flags):
+            for df in def_flags:
+                if (df.name in flags):
+                    self.__exec_flag_func(df, flags[df.name])
+
+
+        ## execute command method
+        params = inspect.getfullargspec(self.commands[command]).args
+        if ('args' in params and 'flags' in params):
+            self.commands[command](args, flags)
+        elif ('args' in params):
+            self.commands[command](args)
+        elif ('flags' in params):
+            self.commands[command](flags)
+        else:
+            self.commands[command]()
+
+    def __exec_flag_func(self, flag, arg):
+        '''Take in a flag and an optional arg, and execute 
+        flag function if defined.
+        '''
+        if (flag.f):
+            if (arg):
+                flag.f(arg)
+            else:
+                flag.f()

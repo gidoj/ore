@@ -8,7 +8,6 @@ class Flag(object):
        - static class to parse out all flags from an input line
     '''
 
-
     def __init__(self, name, description, arg="", f=None):
         self.name = name
         self.description = description
@@ -38,21 +37,26 @@ class Flag(object):
             # edit out matched flag string 
             start = match.start(0)
             end = match.end(0) if self.arg else match.end(1)
-            edited = line[:start] + line[end:]
+            edited = line[:start] + line[end:].strip()
             
             return ((name, arg), edited)
 
 
     @staticmethod
     def parse_out_flags(line, flags):
+        '''Parse out defined flags from input line.
+
+           - if matches found, return as dict of {"line": line, "matches": matches"}
+        '''
 
         if (not flags): return line
 
-        matches = []
+        matches = {}
         for f in flags:
             match = f.parse_out_flag(line)
             if (match[0]):
-                matches.append(match[0])
+                # if match, push {*flag name*: *flag arg*} to dict
+                matches[match[0][0]] = match[0][1]
                 line = match[1]
 
         return {"line": line, "matches": matches}
