@@ -1,6 +1,13 @@
 import re
 
 class Flag(object):
+    '''Flag class to be used with Ore command line interpreter.
+
+       - stores flag information (name, description, argument, function)
+       - parses out flag call from input line
+       - static class to parse out all flags from an input line
+    '''
+
 
     def __init__(self, name, description, arg="", f=None):
         self.name = name
