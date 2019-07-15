@@ -1,6 +1,6 @@
 import re
 
-class Flag:
+class Flag(object):
 
     def __init__(self, name, description, arg="", f=None):
         self.name = name
@@ -34,3 +34,18 @@ class Flag:
             edited = line[:start] + line[end:]
             
             return ((name, arg), edited)
+
+
+    @staticmethod
+    def parse_out_flags(line, flags):
+
+        if (not flags): return line
+
+        matches = []
+        for f in flags:
+            match = f.parse_out_flag(line)
+            if (match[0]):
+                matches.append(match[0])
+                line = match[1]
+
+        return {"line": line, "matches": matches}
