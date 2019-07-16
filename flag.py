@@ -60,3 +60,16 @@ class Flag(object):
                 line = match[1]
 
         return {"line": line, "matches": matches}
+
+
+    @staticmethod
+    def get_usage_string(flags):
+        '''return merged usage strings from given flags.
+        '''
+        usages = []
+        for f in flags:
+            usages.append("[{}]".format(f.usage))
+
+        return ' '.join(usages)
+
+
