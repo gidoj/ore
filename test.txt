@@ -1,6 +1,0 @@
-one method
-two method
-args: ['test', 'one', 'two']
-one method
-two method
-args: ['testing', 'here']
