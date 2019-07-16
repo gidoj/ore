@@ -59,7 +59,7 @@ class Ore(object):
         line = ' '.join(sys.argv[1:])
         self.flag_input = Flag.parse_out_flags(line, self.flags + self.__flags)["matches"]
         
-        for f in self.falgs + self.__flags:
+        for f in self.flags + self.__flags:
             if (f.name in self.flag_input):
                 self.__exec_flag_func(f, self.flag_input[f.name])
 
@@ -83,7 +83,9 @@ class Ore(object):
         while (True):
             line = input(self.prompt)
             if (line):
+                line = self.precmd(line)
                 if (not self.__evaluate(line)): break 
+                self.postcmd(line)
                 readline.append_history_file(1, "./.history")
             else:
                 self.emptyline()
@@ -136,6 +138,20 @@ class Ore(object):
         '''
         return
 
+
+    def precmd(self, line):
+        '''Function executed just before line is parsed and executed.
+
+        Return value is parsed and executed as if reaponse from prompt.
+        '''
+        return line
+
+    def postcmd(self, line):
+        '''Function executed just after line is parsed and executed.
+
+        No return value.
+        '''
+        return
 
     def generate_readme(self):
         print('Generating readme.')
