@@ -5,6 +5,7 @@ from io import StringIO
 # self defined modules
 from orecompleter import OreCompleter
 from flag import Flag
+from textstyler import Styler
 
 class Ore(object):
     intro = "Welcome. Type ? for documentation."
@@ -17,8 +18,8 @@ class Ore(object):
                Flag('r', 'Build a readme file.')]
     
     groups = {"Commands": []}
+   
 
-    
     def __init__(self):
         
         ## create .history if doesn't exist
@@ -127,6 +128,7 @@ class Ore(object):
         '''Function executed just before main_loop() exits. To be overridden by subclass.
         '''
         return
+
 
     def generate_readme(self):
         print('Generating readme.')
