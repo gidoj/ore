@@ -18,7 +18,6 @@ class Ore(object):
                Flag('r', 'Build a readme file.')]
     
     groups = {"Commands": []}
-   
 
     def __init__(self):
         
@@ -27,13 +26,6 @@ class Ore(object):
 
         ## read in saved history commands
         readline.read_history_file("./.history")
-
-        ## record/execute any flags passed in
-        line = ' '.join(sys.argv[1:])
-        self.flag_input = Flag.parse_out_flags(line, self.flags + self.__flags)["matches"]
-        
-        if ('r' in self.flag_input):
-            self.generate_readme()
 
         ## get defined commands
         self.commands = {}
@@ -62,6 +54,21 @@ class Ore(object):
             completer.set_command_completer(c, completers[c])
 
         readline.set_completer(completer.complete)
+
+        ## record/execute any flags passed in
+        line = ' '.join(sys.argv[1:])
+        self.flag_input = Flag.parse_out_flags(line, self.flags + self.__flags)["matches"]
+        
+        for f in self.falgs + self.__flags:
+            if (f.name in self.flag_input):
+                self.__exec_flag_func(f, self.flag_input[f.name])
+
+        ## generate docs
+        
+        
+        ## check if generating readme
+        if ('r' in self.flag_input):
+            self.generate_readme()
 
         ## bind tab to autocomplete
         readline.parse_and_bind("tab: complete")
