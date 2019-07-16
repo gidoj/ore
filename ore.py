@@ -11,11 +11,14 @@ class Ore(object):
     prompt = '>> '
     split_pattern = ' '
     
-    # TODO: fill in
-    flags = {}
+    flags = []
+    __flags = [Flag('f', 'Save output from commands to file.', 'filename'),
+               Flag('s', 'Silence output from commands.'),
+               Flag('r', 'Build a readme file.')]
+    
     groups = {"Commands": []}
 
-
+    
     def __init__(self):
         
         ## create .history if doesn't exist
@@ -23,6 +26,13 @@ class Ore(object):
 
         ## read in saved history commands
         readline.read_history_file("./.history")
+
+        ## record/execute any flags passed in
+        line = ' '.join(sys.argv[1:])
+        self.flag_input = Flag.parse_out_flags(line, self.flags + self.__flags)["matches"]
+        
+        if ('r' in self.flag_input):
+            self.generate_readme()
 
         ## get defined commands
         self.commands = {}
@@ -118,6 +128,9 @@ class Ore(object):
         '''
         return
 
+    def generate_readme(self):
+        print('Generating readme.')
+
     ######################
     ## HELPER FUNCTIONS ##
     ######################
@@ -188,7 +201,17 @@ class Ore(object):
                 if (bash_string):
                     self.__bash(command, args, matched_flags, bash_string) 
                 else:
-                    self.__exec_command(command, args, matched_flags)
+                    out_string = self.__get_stdout(command, args, matched_flags)
+
+                    if ('s' not in self.flag_input):
+                        # end="" to remove single \n character that
+                        # gets added from __get_stdout call
+                        print(out_string, end="")
+
+                    if ('f' in self.flag_input):
+                        with open(self.flag_input['f'], 'a') as out:
+                            out.write(out_string)
+
             else:
                 self.default(line)
 
@@ -213,12 +236,12 @@ class Ore(object):
         stdout = subprocess.run(' '.join(bash_args), shell=True)
 
 
-    def __get_stdout(self, command, args):
+    def __get_stdout(self, command, args, flags):
         '''Run command and return output printed to console.
         '''
         bu = sys.stdout
         sys.stdout = StringIO()
-        self.__exec_command(self, command, args, flags)
+        self.__exec_command(command, args, flags)
         out = sys.stdout.getvalue()
         sys.stdout.close()
         sys.stdout = bu
