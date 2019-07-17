@@ -61,15 +61,16 @@ class Flag(object):
 
         return {"line": line, "matches": matches}
 
-
     @staticmethod
-    def get_usage_string(flags):
-        '''return merged usage strings from given flags.
+    def merge_usage(flags):
+        '''Merge usage statements of flags into single usage.
         '''
-        usages = []
+
+        if (not flags):
+            return ''
+
+        usage = []
         for f in flags:
-            usages.append("[{}]".format(f.usage))
+            usage.append("[{}]".format(f.usage))
 
-        return ' '.join(usages)
-
-
+        return ' '.join(usage)

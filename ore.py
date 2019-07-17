@@ -1,6 +1,7 @@
 import sys, readline, inspect, subprocess
 from pathlib import Path
 from io import StringIO
+from collections import OrderedDict
 
 # self defined modules
 from orecompleter import OreCompleter
@@ -11,13 +12,13 @@ class Ore(object):
     intro = "Welcome. Type ? for documentation."
     prompt = '>> '
     split_pattern = ' '
-    
+
     flags = []
     __flags = [Flag('f', 'Save output from commands to file.', 'filename'),
                Flag('s', 'Silence output from commands.'),
                Flag('r', 'Build a readme file.')]
     
-    groups = {"Commands": []}
+    groups = []
 
     def __init__(self):
         
@@ -42,6 +43,8 @@ class Ore(object):
             elif (name.startswith("completer_")):
                 completers[name[10:]] = f
 
+
+
         ## setup completer
         completer = OreCompleter(list(self.commands.keys()))
         
@@ -63,12 +66,15 @@ class Ore(object):
             if (f.name in self.flag_input):
                 self.__exec_flag_func(f, self.flag_input[f.name])
 
+        ## convert groups to an ordereddict
+        self.groups = OrderedDict(self.groups)
+
         ## generate docs
-        
+        self.docs = self.compile_docs()        
         
         ## check if generating readme
         if ('r' in self.flag_input):
-            self.generate_readme()
+            self.compile_readme()
 
         ## bind tab to autocomplete
         readline.parse_and_bind("tab: complete")
@@ -110,18 +116,11 @@ class Ore(object):
         
         
     def show_docs(self):
-        '''Compile and present documentation based on user defined
+        '''Present documentation based on user defined
            methods and docstrings.
         '''
-        # TODO: implement
-        class_doc = self.__doc__ if self.__doc__ else ""
-        print("\n{} Documentation".format(self.__class__.__name__))
-        print("{0}\n{1}\n{0}".format('-'*25, class_doc))
-        for key in self.commands.keys():
-            docs = self.commands[key].__doc__ if self.commands[key].__doc__ else ""
-            print(key)
-            print(docs)
-            print()
+        print(self.docs)
+
 
     def ore_quit(self, args):
         '''Quit the program.'''
@@ -153,26 +152,50 @@ class Ore(object):
         '''
         return
 
-    def generate_readme(self):
-        print('Generating readme.')
+    def compile_docs(self):
+        '''Compile subclass docs by reading defined class and command docstrings.
+        '''
+
+        #get formatted class docs
+        docs = ['', self.__get_class_docs(),
+                "{0}\n## COMMANDS\n{0}\n".format('='*25)]
+        
+        # initialize dictionary for grouped commands
+        group_docs = OrderedDict()
+        for g in self.groups:
+            group_docs[g] = []
+        group_docs["Miscellaneous"] = []
+    
+        # get each command docs and group together by defined groups
+        for command in sorted(self.commands):
+            group = self.__get_group_from_command(command)
+            group_docs[group].append(self.__get_command_docs(command))
+
+        # add command docs to master docs by group name
+        for group in group_docs:
+            docs.append("## {}\n{}".format(group, '='*18))
+            for c in group_docs[group]:
+                docs.append(c)
+            docs.append('')
+
+        return '\n'.join(docs)
+
+    def compile_readme(self):
+        '''Generate a readme file: readme_auto.md
+        '''
+        edited = []
+
+        for line in self.docs.split('\n'):
+            if ('='*25 not in line):
+                edited.append(line)
+
+        with open('readme_auto.md', 'w') as readme:
+            readme.write('\n'.join(edited))
+
 
     ######################
     ## HELPER FUNCTIONS ##
     ######################
-
-    def __compile_docs(self):
-        # TODO: implement
-        class_name = self.__class__.__name__
-        class_docstring = self.__parse_docstring(self.__doc__)
-
-
-
-    def __parse_docstring(self, docstring):
-        # TODO: implement
-        usage = ""
-        description = ""
-        example = ""
-        return {"usage": usage, "description": description, "example": example}
 
     def __evaluate(self, line):
         '''Evaluate line command.
@@ -210,6 +233,7 @@ class Ore(object):
             else:
                 parsed = parts[1]
             args = parsed.split(self.split_pattern)
+                
                 
         ## check for predefined commands
         if (command == "quit"):
@@ -281,7 +305,7 @@ class Ore(object):
         try:
             flags = getattr(self, 'flags_'+command)
         except AttributeError:
-            flags = ()
+            flags = []
         
         return flags
 
@@ -321,3 +345,108 @@ class Ore(object):
                 flag.f(arg)
             else:
                 flag.f()
+
+
+    def __get_group_from_command(self, command):
+        '''Find group that command is a member of.
+        '''
+        for g in self.groups:
+            if command in self.groups[g]:
+                return g
+
+        return "Miscellaneous"
+
+
+    def __get_class_docs(self):
+        # class name
+        # insert __flags usage into USAGE statement
+        
+        class_name = self.__class__.__name__
+
+        docs = ['-'*25, "# {}".format(class_name), '-'*25]
+
+        parsed = self.__parse_docstring(self.__doc__)
+
+        if (parsed["DESCRIPTION"]):
+            docs.append(parsed["DESCRIPTION"])
+        
+        if (parsed["USAGE"]):
+            usage_string = "**USAGE**: *{} {}*".format(Flag.merge_usage(self.__flags), parsed["USAGE"][6:].lstrip())
+        else:
+            usage_string = "**USAGE**: *python3 {} {}*".format(sys.argv[0], Flag.merge_usage(self.__flags))
+        
+        docs.append(usage_string + '\n')
+
+        flag_info = self.__get_flag_info(self.__flags + self.flags)
+
+        if (flag_info):
+            docs.append("### **Flags**\n")
+            docs.append(flag_info + '\n')
+
+        if (parsed["EXAMPLES"]):
+            docs.append("### **Examples**")
+            docs.append('\n'.join(parsed["EXAMPLES"]))
+        
+        docs.append('')
+
+        return '\n'.join(docs)
+
+
+    def __get_command_docs(self, command):
+        # docstring (usage, description, examples)
+        # get flags (description)
+        
+        docs = ['', "#### *{}*".format(command)]
+
+        parsed = self.__parse_docstring(self.commands[command].__doc__)
+        
+        if (parsed["DESCRIPTION"]):
+            docs.append(parsed["DESCRIPTION"])
+        if (parsed["USAGE"]):
+            docs.append("**USAGE:** *{}*\n".format(parsed["USAGE"][6:].lstrip()))
+        flag_info = self.__get_flag_info(self.__get_flags(command))
+        
+        if (flag_info):
+            docs.append("**Flags**\n")
+            docs.append(flag_info + '\n')
+
+        if (parsed["EXAMPLES"]):
+            docs.append("**Examples**\n")
+            docs.append('\n'.join(parsed["EXAMPLES"]))
+        
+        return '\n'.join(docs)
+
+
+    def __get_flag_info(self, flags):
+
+        info = []
+
+        for f in flags:
+            info.append("* {}: {}".format(f.usage, f.description))
+
+        return '\n'.join(info)
+
+
+    def __parse_docstring(self, docstring):
+        '''Parse docstring into USAGE, DESCRIPTION, EXAMPLES
+        '''
+        
+        parsed = {"USAGE": '', "DESCRIPTION": '', "EXAMPLES": []}
+        if (not docstring): return parsed
+
+        examples = []
+        description = []
+
+        for line in docstring.split('\n'):
+            line = line.lstrip()
+            if (line.startswith("USAGE:")):
+                parsed["USAGE"] = line
+            elif (line.startswith("EXAMPLE:")):
+                examples.append("```\n{}\n```".format(line[8:].lstrip()))
+            else:
+                description.append(line)
+
+        parsed["EXAMPLES"] = examples
+        parsed["DESCRIPTION"] = '\n'.join(description)
+
+        return parsed
