@@ -122,6 +122,28 @@ class Ore(object):
         print(self.docs)
 
 
+    def show_mini_docs(self):
+        '''Show list of commands by defined group.
+        '''
+        # initialize dictionary for grouped commands
+        group_docs = OrderedDict()
+        for g in self.groups:
+            group_docs[g] = []
+        group_docs["Miscellaneous"] = []
+    
+        # get each command docs and group together by defined groups
+        for command in sorted(self.commands):
+            group = self.__get_group_from_command(command)
+            group_docs[group].append(command)
+
+        for g in group_docs:
+            print('\n{}\n{}'.format(g, '='*15))
+
+            for c in group_docs[g]:
+                print("* {}".format(c))
+        print()
+
+
     def ore_quit(self, args):
         '''Quit the program.'''
         print("Bye.")
@@ -151,6 +173,7 @@ class Ore(object):
         No return value.
         '''
         return
+
 
     def compile_docs(self):
         '''Compile subclass docs by reading defined class and command docstrings.
@@ -241,6 +264,8 @@ class Ore(object):
             return False
         elif (command == "?"):
             self.show_docs()
+        elif (command == "??"):
+            self.show_mini_docs()
         
         else:
 
