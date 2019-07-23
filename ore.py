@@ -9,7 +9,7 @@ from flag import Flag
 from textstyler import Styler
 
 class Ore(object):
-    intro = "Welcome. Type ? for documentation."
+    intro = "Welcome. Type ? for documentation, ?? for list of commands."
     prompt = '>> '
     split_pattern = ' '
 
