@@ -275,16 +275,20 @@ class Ore(object):
                 if (bash_string):
                     self.__bash(command, args, matched_flags, bash_string) 
                 else:
-                    out_string = self.__get_stdout(command, args, matched_flags)
+                    if ("BYPASS" in self.commands[command].__doc__):
+                        print("WARNING: Bypassing any silenced output or writes to file.")
+                        self.__exec_command(command, args, matched_flags);
+                    else:
+                        out_string = self.__get_stdout(command, args, matched_flags)
 
-                    if ('s' not in self.flag_input):
-                        # end="" to remove single \n character that
-                        # gets added from __get_stdout call
-                        print(out_string, end="")
+                        if ('s' not in self.flag_input):
+                            # end="" to remove single \n character that
+                            # gets added from __get_stdout call
+                            print(out_string, end="")
 
-                    if ('f' in self.flag_input):
-                        with open(self.flag_input['f'], 'a') as out:
-                            out.write(out_string)
+                        if ('f' in self.flag_input):
+                            with open(self.flag_input['f'], 'a') as out:
+                                out.write(out_string)
 
             else:
                 self.default(line)
@@ -468,6 +472,8 @@ class Ore(object):
                 parsed["USAGE"] = line
             elif (line.startswith("EXAMPLE:")):
                 examples.append("```\n{}\n```".format(line[8:].lstrip()))
+            elif (line.startswith("BYPASS")):
+                continue;
             else:
                 description.append(line)
 
