@@ -263,7 +263,11 @@ class Ore(object):
             self.ore_quit(args)
             return False
         elif (command == "?"):
-            self.show_docs()
+            if (args and args[0] in self.commands):
+                print(self.__get_command_docs(args[0]));
+            else:
+                self.show_docs()
+
         elif (command == "??"):
             self.show_mini_docs()
         
