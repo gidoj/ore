@@ -22,11 +22,12 @@ class Ore(object):
 
     def __init__(self):
         
-        ## create .history if doesn't exist
-        if (not Path("./.history").is_file()): open("./.history", 'w').close()
+        ## create .history if doesn't exist; save to user home dir
+        history_path = str(Path.home()) + '/.' + self.__class__.__name__ + '_history'
+        if (not Path(history_path).is_file()): open(history_path, 'w').close()
 
         ## read in saved history commands
-        readline.read_history_file("./.history")
+        readline.read_history_file(history_path)
 
         ## get defined commands
         self.commands = {}
