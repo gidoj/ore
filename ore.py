@@ -21,15 +21,15 @@ class Ore(object):
     groups = []
 
 
-    __history_path = str(Path.home()) + '/.' + self.__class__.__name__ + '_history'
 
     def __init__(self):
         
         ## create .history if doesn't exist; save to user home dir
-        if (not Path(self.__history_path).is_file()): open(__history_path, 'w').close()
+        self.__history_path = str(Path.home()) + '/.' + self.__class__.__name__ + '_history'
+        if (not Path(self.__history_path).is_file()): open(self.__history_path, 'w').close()
 
         ## read in saved history commands
-        readline.read_history_file(__history_path)
+        readline.read_history_file(self.__history_path)
 
         ## get defined commands
         self.commands = {}
