@@ -9,7 +9,7 @@ from flag import Flag
 from textstyler import Styler
 
 class Ore(object):
-    intro = "Welcome. Type ? for documentation, ?? for list of commands."
+    intro = "Welcome. Type ? or help  for documentation, ?? for list of commands."
     prompt = '>> '
     split_pattern = ' '
 
@@ -265,7 +265,7 @@ class Ore(object):
         if (command == "quit"):
             self.ore_quit(args)
             return False
-        elif (command == "?"):
+        elif (command == "?" or command == "help"):
             if (args and args[0] in self.commands):
                 print(self.__get_command_docs(args[0]));
             else:
