@@ -49,7 +49,7 @@ class Ore(object):
 
 
         ## setup completer
-        completer = OreCompleter(list(self.commands.keys()))
+        self.completer = OreCompleter(list(self.commands.keys()))
         
         # check if any subclass completers have been set
         for c in completers.keys():
@@ -57,9 +57,9 @@ class Ore(object):
             if (c not in self.commands):
                 raise Exception("cannot set completer of undefined command ({})".format(c))
 
-            completer.set_command_completer(c, completers[c])
+            self.completer.set_command_completer(c, completers[c])
 
-        readline.set_completer(completer.complete)
+        readline.set_completer(self.completer.complete)
 
         ## record/execute any flags passed in
         line = ' '.join(sys.argv[1:])
@@ -104,10 +104,31 @@ class Ore(object):
 
     def default(self, line):
         '''Executes if user input is unrecognized.
-        
+            
+           - Attempt to autocomplete with list of known commands first.
            - Ore default behavior just gives user and error message.
         '''
-        print("Error: command unrecognized. ? for help.")
+        # Try to autocomplete command first
+        parts = line.split()
+        state = 0
+        commands = []
+        while True:
+            command = self.completer.complete(parts[0], state)
+            if (command):
+                commands.append(command)
+                state += 1
+            else:
+                break
+
+        if (len(commands) == 1):
+            parts[0] = commands[0]
+            self.__evaluate(' '.join(parts))
+        elif (len(commands) > 1):
+            for c in commands:
+                print('{}\t'.format(c), end="")
+            print()
+        else:
+            print("Error: command unrecognized. ? for help.")
 
 
     def emptyline(self):
@@ -298,7 +319,7 @@ class Ore(object):
                                 out.write(out_string)
 
             else:
-                self.default(line)
+                self.default(' '.join(line))
 
         return True
 
