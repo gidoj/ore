@@ -279,7 +279,7 @@ class Ore(object):
                 parsed = flag_search["line"]
             else:
                 parsed = parts[1]
-            args = parsed.split(self.split_pattern)
+            args = parsed.split(self.split_pattern) if parsed else []
                 
                 
         ## check for predefined commands
